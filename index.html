@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIFA World Cup 2026 — Bracket Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-bg">
+    <div class="bg-orb orb1"></div>
+    <div class="bg-orb orb2"></div>
+    <div class="bg-orb orb3"></div>
+    <div class="field-lines"></div>
+  </div>
+  <div class="welcome-content">
+    <div class="tournament-badge">
+      <span class="badge-year">2026</span>
+      <div class="badge-trophy">⚽</div>
+      <span class="badge-label">FIFA WORLD CUP™</span>
+    </div>
+    <h1 class="welcome-title">BRACKET<br/><em>PREDICTOR</em></h1>
+    <p class="welcome-sub">USA · CANADA · MEXICO &nbsp;|&nbsp; 48 TEAMS &nbsp;|&nbsp; 12 GROUPS</p>
+    <div class="name-form">
+      <label class="name-label">YOUR NAME</label>
+      <input type="text" id="playerName" class="name-input" placeholder="Enter your name..." maxlength="30" />
+      <button class="btn-start" onclick="startBracket()">
+        <span>START PREDICTING</span>
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP STAGE SCREEN -->
+<div id="screen-groups" class="screen">
+  <header class="app-header">
+    <div class="header-left">
+      <span class="header-badge">⚽ WC2026</span>
+      <span id="headerPlayerName" class="header-player"></span>
+    </div>
+    <div class="header-stage">GROUP STAGE</div>
+    <div class="header-progress">
+      <div id="groupProgressBar" class="progress-fill"></div>
+    </div>
+  </header>
+
+  <div class="groups-nav">
+    <div id="groupTabs" class="group-tabs"></div>
+  </div>
+
+  <div id="groupContent" class="group-content-area"></div>
+
+  <div class="groups-footer">
+    <button class="btn-secondary" onclick="prevGroup()">← PREV GROUP</button>
+    <div id="groupCounter" class="group-counter">Group A of 12</div>
+    <button class="btn-primary" id="nextGroupBtn" onclick="nextGroupOrAdvance()">NEXT GROUP →</button>
+  </div>
+</div>
+
+<!-- THIRD PLACE SELECTION SCREEN -->
+<div id="screen-thirds" class="screen">
+  <header class="app-header">
+    <div class="header-left">
+      <span class="header-badge">⚽ WC2026</span>
+      <span id="thirdsPlayerName" class="header-player"></span>
+    </div>
+    <div class="header-stage">BEST 3RD PLACE TEAMS</div>
+  </header>
+
+  <div class="thirds-content">
+    <div class="thirds-header">
+      <h2 class="thirds-title">SELECT THE 8 BEST 3RD PLACE TEAMS</h2>
+      <p class="thirds-subtitle">Pick which 8 of the 12 third-placed teams advance to the Round of 32</p>
+      <div class="thirds-count"><span id="thirdsSelected">0</span>/8 selected</div>
+    </div>
+    <div id="thirdsGrid" class="thirds-grid"></div>
+    <button class="btn-primary btn-center" id="thirdsAdvanceBtn" onclick="advanceToKnockout()" disabled>
+      PROCEED TO KNOCKOUT STAGE →
+    </button>
+  </div>
+</div>
+
+<!-- KNOCKOUT STAGE SCREEN -->
+<div id="screen-knockout" class="screen">
+  <header class="app-header">
+    <div class="header-left">
+      <span class="header-badge">⚽ WC2026</span>
+      <span id="knockoutPlayerName" class="header-player"></span>
+    </div>
+    <div class="header-stage" id="knockoutStageName">ROUND OF 32</div>
+    <div class="header-progress">
+      <div id="knockoutProgressBar" class="progress-fill"></div>
+    </div>
+  </header>
+
+  <div class="knockout-nav">
+    <button class="ko-nav-btn" id="koNavR32" onclick="showKOStage('r32')">R32</button>
+    <div class="ko-nav-arrow">→</div>
+    <button class="ko-nav-btn" id="koNavR16" onclick="showKOStage('r16')">R16</button>
+    <div class="ko-nav-arrow">→</div>
+    <button class="ko-nav-btn" id="koNavQF" onclick="showKOStage('qf')">QF</button>
+    <div class="ko-nav-arrow">→</div>
+    <button class="ko-nav-btn" id="koNavSF" onclick="showKOStage('sf')">SF</button>
+    <div class="ko-nav-arrow">→</div>
+    <button class="ko-nav-btn" id="koNavF" onclick="showKOStage('final')">FINAL</button>
+  </div>
+
+  <div id="knockoutContent" class="knockout-content"></div>
+
+  <div class="knockout-footer">
+    <button class="btn-export" onclick="exportGroupStage()">
+      📥 EXPORT GROUP STAGE
+    </button>
+    <button class="btn-export btn-export-ko" onclick="exportKnockout()">
+      📥 EXPORT KNOCKOUT BRACKET
+    </button>
+  </div>
+</div>
+
+<!-- CHAMPION SCREEN -->
+<div id="screen-champion" class="screen">
+  <div class="champion-bg">
+    <div class="bg-orb orb1"></div>
+    <div class="bg-orb orb2"></div>
+    <div class="confetti" id="confetti"></div>
+  </div>
+  <div class="champion-content">
+    <div class="champion-label">🏆 WORLD CHAMPION 🏆</div>
+    <div id="championFlag" class="champion-flag-big"></div>
+    <div id="championName" class="champion-name"></div>
+    <div id="champPlayerLabel" class="champ-player-label"></div>
+    <div class="champion-actions">
+      <button class="btn-export" onclick="exportGroupStage()">📥 EXPORT GROUP STAGE</button>
+      <button class="btn-export btn-export-ko" onclick="exportKnockout()">📥 EXPORT KNOCKOUT BRACKET</button>
+      <button class="btn-secondary" onclick="restartApp()">🔄 START OVER</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT CANVAS (hidden) -->
+<div id="exportGroupStageEl" class="export-canvas" style="display:none;position:fixed;top:-9999px;left:-9999px;"></div>
+<div id="exportKnockoutEl" class="export-canvas export-ko" style="display:none;position:fixed;top:-9999px;left:-9999px;"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
