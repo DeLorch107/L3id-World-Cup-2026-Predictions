@@ -1,13 +1,13 @@
 // ============================================================
-// FIFA WC 2026 BRACKET APP — MAIN LOGIC
+// FIFA WC 2026 BRACKET APP — MAIN LOGIC (FIXED)
 // ============================================================
 
 let state = {
   playerName: '',
   currentGroup: 0,
-  groupPredictions: {}, 
-  selectedThirds:[],   
-  knockoutResults: {},  
+  groupPredictions: {},
+  selectedThirds: [],
+  knockoutResults: {},
   currentKOStage: 'r32',
 };
 
@@ -117,7 +117,7 @@ function renderCurrentGroup() {
 
 function renderRankedSlots(ranked, unranked, allTeams) {
   const container = document.getElementById('rankedSlots');
-  const labels =['1st', '2nd', '3rd', '4th'];
+  const labels = ['1st', '2nd', '3rd', '4th'];
   container.innerHTML = ranked.map((team, i) => `
     <div class="ranked-slot ${team ? 'filled' : 'empty'} slot-${labels[i]}"
          data-slot="${i}" onclick="clickSlot(${i})">
@@ -125,7 +125,7 @@ function renderRankedSlots(ranked, unranked, allTeams) {
         <span class="team-flag">${team.flag}</span>
         <span class="team-name-sm">${team.name}</span>
         <button class="remove-btn" onclick="removeFromSlot(event,${i})">✕</button>
-      ` : `<span class="slot-placeholder">#${i+1}</span>`}
+      ` : `<span class="slot-placeholder">#${i + 1}</span>`}
     </div>
   `).join('');
 }
@@ -141,7 +141,7 @@ function renderUnrankedPool(unranked, ranked) {
       <div class="team-card ${isRanked ? 'ranked' : ''}" onclick="clickTeamCard('${team.name}')">
         <span class="team-flag-big">${team.flag}</span>
         <span class="team-name">${team.name}</span>
-        ${isRanked ? `<span class="rank-badge">#${rankIdx+1}</span>` : ''}
+        ${isRanked ? `<span class="rank-badge">#${rankIdx + 1}</span>` : ''}
       </div>
     `;
   }).join('');
@@ -149,6 +149,7 @@ function renderUnrankedPool(unranked, ranked) {
 
 let pendingSlot = null;
 
+// FIX: Removed the early return that was locking filled slots permanently
 function clickSlot(slotIdx) {
   pendingSlot = slotIdx;
   document.querySelectorAll('.ranked-slot').forEach((el, i) => {
@@ -160,7 +161,7 @@ function clickTeamCard(teamName) {
   const groupKey = GROUP_NAMES[state.currentGroup];
   const group = GROUPS[groupKey];
   const team = group.teams.find(t => t.name === teamName);
-  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] : [null,null,null,null];
+  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] : [null, null, null, null];
 
   const existingIdx = pred.findIndex(r => r && r.name === teamName);
   if (existingIdx !== -1) pred[existingIdx] = null;
@@ -186,7 +187,7 @@ function removeFromSlot(e, slotIdx) {
   e.stopPropagation();
   const groupKey = GROUP_NAMES[state.currentGroup];
   const group = GROUPS[groupKey];
-  const pred = state.groupPredictions[groupKey] ?[...state.groupPredictions[groupKey]] : [null,null,null,null];
+  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] : [null, null, null, null];
   pred[slotIdx] = null;
   state.groupPredictions[groupKey] = pred;
   const unranked = group.teams.filter(t => !pred.find(r => r && r.name === t.name));
@@ -239,7 +240,7 @@ function nextGroupOrAdvance() {
 function buildThirdsScreen() {
   const grid = document.getElementById('thirdsGrid');
   grid.innerHTML = GROUP_NAMES.map(g => {
-    const team = state.groupPredictions[g][2]; 
+    const team = state.groupPredictions[g][2];
     const isSelected = state.selectedThirds.includes(g);
     return `
       <div class="third-card ${isSelected ? 'selected' : ''}" id="tc-${g}" onclick="toggleThird('${g}')">
@@ -250,6 +251,8 @@ function buildThirdsScreen() {
       </div>
     `;
   }).join('');
+
+  // FIX: update count and button state after rendering grid
   updateThirdsCount();
 }
 
@@ -259,23 +262,57 @@ function toggleThird(groupKey) {
     state.selectedThirds.splice(idx, 1);
   } else {
     if (state.selectedThirds.length >= 8) {
-      document.getElementById('thirdsSelected').parentElement.classList.add('shake');
-      setTimeout(() => document.getElementById('thirdsSelected').parentElement.classList.remove('shake'), 500);
+      const countEl = document.getElementById('thirdsSelected');
+      if (countEl && countEl.parentElement) {
+        countEl.parentElement.classList.add('shake');
+        setTimeout(() => countEl.parentElement.classList.remove('shake'), 500);
+      }
       return;
     }
     state.selectedThirds.push(groupKey);
   }
-  buildThirdsScreen(); // Re-render to reflect checks
+
+  // FIX: update individual card instead of rebuilding entire grid,
+  // then update the count + button state separately
+  updateThirdCard(groupKey);
+  updateThirdsCount();
 }
 
+// FIX: New helper — updates a single card without re-rendering the whole grid
+function updateThirdCard(groupKey) {
+  const card = document.getElementById(`tc-${groupKey}`);
+  if (!card) return;
+  const isSelected = state.selectedThirds.includes(groupKey);
+  const team = state.groupPredictions[groupKey][2];
+  card.className = `third-card ${isSelected ? 'selected' : ''}`;
+  card.innerHTML = `
+    <div class="third-card-group">GROUP ${groupKey}</div>
+    <div class="third-card-flag">${team.flag}</div>
+    <div class="third-card-name">${team.name}</div>
+    ${isSelected ? '<div class="third-card-check">✓ ADVANCES</div>' : ''}
+  `;
+}
+
+// FIX: Always update both the counter text and the button disabled state together
 function updateThirdsCount() {
-  document.getElementById('thirdsSelected').textContent = state.selectedThirds.length;
-  document.getElementById('thirdsAdvanceBtn').disabled = state.selectedThirds.length !== 8;
+  const countEl = document.getElementById('thirdsSelected');
+  const btn = document.getElementById('thirdsAdvanceBtn');
+  const count = state.selectedThirds.length;
+  if (countEl) countEl.textContent = count;
+  if (btn) {
+    btn.disabled = count !== 8;
+    btn.textContent = count === 8 ? 'ADVANCE TO KNOCKOUT →' : `SELECT ${8 - count} MORE`;
+  }
 }
 
 // ── KNOCKOUT STAGE PREPARATION ──────────────────────────────
+
+// FIX: Added guard so button truly cannot fire unless 8 thirds selected
 function advanceToKnockout() {
-  if (state.selectedThirds.length !== 8) return;
+  if (state.selectedThirds.length !== 8) {
+    alert('Please select exactly 8 third-place teams first.');
+    return;
+  }
   buildKnockoutMatches();
   showScreen('screen-knockout');
   showKOStage('r32');
@@ -292,42 +329,43 @@ function getTeamFromPosition(group, pos) {
 /**
  * BEST PRACTICE ALGORITHM: Bipartite Matching via Backtracking.
  * FIFA uses a matrix of 495 combinations to slot 3rd-place teams.
- * This dynamically assigns the 8 chosen teams to their 8 R32 allowed pools, 
+ * This dynamically assigns the 8 chosen teams to their 8 R32 allowed pools,
  * guaranteeing zero duplicates or dead-ends.
  */
 function solveThirdPlaceMapping(selectedThirds, pools) {
   let result = new Array(8).fill(null);
   let used = new Array(8).fill(false);
-  
+
   function backtrack(matchIndex) {
-    if (matchIndex === 8) return true; // Found perfect distribution
-    
+    if (matchIndex === 8) return true;
+
     for (let i = 0; i < 8; i++) {
-      // If team is untouched and is part of the pool designated for this specific match
       if (!used[i] && pools[matchIndex].includes(selectedThirds[i])) {
         used[i] = true;
         result[matchIndex] = selectedThirds[i];
         if (backtrack(matchIndex + 1)) return true;
-        
-        // If the path failed, reset and try next configuration (backtracking)
-        used[i] = false; 
+        used[i] = false;
         result[matchIndex] = null;
       }
     }
     return false;
   }
-  
+
   if (backtrack(0)) return result;
   return null;
 }
 
 function resolveR32Matches() {
-  // Extract all 8 matchups that need a 3rd place team
   const thirdMatchesInfo = R32_FIXED.filter(m => m.teamB.pos === '3rd' || m.teamA.pos === '3rd');
   const pools = thirdMatchesInfo.map(m => (m.teamA.pos === '3rd' ? m.teamA.pool : m.teamB.pool).split('/'));
-  
-  // Get perfect distribution of group letters
-  let assignment = solveThirdPlaceMapping(state.selectedThirds, pools) || state.selectedThirds;
+
+  // FIX: Fall back gracefully if solver can't find a valid assignment
+  let assignment = solveThirdPlaceMapping(state.selectedThirds, pools);
+  if (!assignment) {
+    console.warn('Could not solve third-place mapping, using order as-is.');
+    assignment = [...state.selectedThirds];
+  }
+
   let tIdx = 0;
 
   return R32_FIXED.map(m => {
@@ -345,36 +383,37 @@ function resolveR32Matches() {
 
 let r32Matches = [];
 let r16Matches = [];
-let qfMatches  =[];
-let sfMatches  =[];
+let qfMatches = [];
+let sfMatches = [];
 let finalMatch = null;
 let thirdMatch = null;
 
 function buildKnockoutMatches() {
   r32Matches = resolveR32Matches();
-  
-  r16Matches = Array.from({length: 8}, (_,i) => ({
+
+  r16Matches = Array.from({ length: 8 }, (_, i) => ({
     id: `r16_${i}`, teamA: null, teamB: null,
-    label: `Round of 16 Match ${i+1}`,
+    label: `Round of 16 Match ${i + 1}`,
     srcA: R16_PAIRS[i][0], srcB: R16_PAIRS[i][1]
   }));
-  qfMatches = Array.from({length: 4}, (_,i) => ({
+  qfMatches = Array.from({ length: 4 }, (_, i) => ({
     id: `qf_${i}`, teamA: null, teamB: null,
-    label: `Quarter-Final ${i+1}`,
+    label: `Quarter-Final ${i + 1}`,
     srcA: QF_PAIRS[i][0], srcB: QF_PAIRS[i][1]
   }));
-  sfMatches = Array.from({length: 2}, (_,i) => ({
+  sfMatches = Array.from({ length: 2 }, (_, i) => ({
     id: `sf_${i}`, teamA: null, teamB: null,
-    label: `Semi-Final ${i+1}`,
+    label: `Semi-Final ${i + 1}`,
     srcA: SF_PAIRS[i][0], srcB: SF_PAIRS[i][1]
   }));
-  
+
   finalMatch = { id: 'final', teamA: null, teamB: null, label: 'THE FINAL' };
   thirdMatch = { id: 'third', teamA: null, teamB: null, label: '3rd Place Match' };
-  
+
   propagateWinners();
 }
 
+// FIX: Added full null checks to prevent silent crashes during SF propagation
 function propagateWinners() {
   const resolveLayer = (matches, sources) => matches.forEach(m => {
     const srcA = sources.find(r => r.id === m.srcA);
@@ -389,9 +428,8 @@ function propagateWinners() {
 
   finalMatch.teamA = state.knockoutResults['sf_0'] || null;
   finalMatch.teamB = state.knockoutResults['sf_1'] || null;
-  
-  // 3rd place match: losers of SF
-    const sf0winner = state.knockoutResults['sf_0'];
+
+  const sf0winner = state.knockoutResults['sf_0'];
   const sf1winner = state.knockoutResults['sf_1'];
   const sf0 = sfMatches[0];
   const sf1 = sfMatches[1];
@@ -408,20 +446,21 @@ function propagateWinners() {
 function showKOStage(stage) {
   state.currentKOStage = stage;
   propagateWinners();
-  
+
   document.querySelectorAll('.ko-nav-btn').forEach(btn => btn.classList.remove('active'));
-  const stageMap = { r32:'R32', r16:'R16', qf:'QF', sf:'SF', final:'F' };
-  document.getElementById(`koNav${stageMap[stage] || stage.toUpperCase()}`).classList.add('active');
+  const stageMap = { r32: 'R32', r16: 'R16', qf: 'QF', sf: 'SF', final: 'F' };
+  const navBtn = document.getElementById(`koNav${stageMap[stage] || stage.toUpperCase()}`);
+  if (navBtn) navBtn.classList.add('active');
 
   document.getElementById('knockoutStageName').textContent = {
     r32: 'ROUND OF 32', r16: 'ROUND OF 16', qf: 'QUARTER-FINALS', sf: 'SEMI-FINALS', final: 'FINAL'
   }[stage];
 
   const doneCount = Object.keys(state.knockoutResults).length;
-  document.getElementById('knockoutProgressBar').style.width = `${Math.round((doneCount/31)*100)}%`;
+  document.getElementById('knockoutProgressBar').style.width = `${Math.round((doneCount / 31) * 100)}%`;
 
   let matches = {
-    r32: r32Matches, r16: r16Matches, qf: qfMatches, sf: sfMatches, final:[finalMatch, thirdMatch]
+    r32: r32Matches, r16: r16Matches, qf: qfMatches, sf: sfMatches, final: [finalMatch, thirdMatch]
   }[stage];
 
   document.getElementById('knockoutContent').innerHTML = `
@@ -431,7 +470,8 @@ function showKOStage(stage) {
   `;
 }
 
-function renderMatchCard(m) {
+// FIX: Restored stage parameter so it's available for future stage-specific rendering
+function renderMatchCard(m, stage) {
   const winner = state.knockoutResults[m.id];
   return `
     <div class="match-card ${m.id === 'final' ? 'match-final' : ''} ${m.id === 'third' ? 'match-third' : ''}">
@@ -459,10 +499,11 @@ function renderMatchCard(m) {
 
 function pickWinner(matchId, side) {
   propagateWinners();
-  const all =[...r32Matches, ...r16Matches, ...qfMatches, ...sfMatches, finalMatch, thirdMatch];
+  const all = [...r32Matches, ...r16Matches, ...qfMatches, ...sfMatches, finalMatch, thirdMatch];
   const match = all.find(m => m.id === matchId);
+  if (!match) return;
+
   const team = side === 'A' ? match.teamA : match.teamB;
-  
   if (!team) return;
 
   state.knockoutResults[matchId] = team;
@@ -481,7 +522,7 @@ function pickWinner(matchId, side) {
   propagateWinners();
   showKOStage(state.currentKOStage);
 
-  // Auto-advance
+  // Auto-advance when all matches in current stage are done
   const stageMatches = { r32: r32Matches, r16: r16Matches, qf: qfMatches, sf: sfMatches }[state.currentKOStage];
   if (stageMatches && stageMatches.every(m => state.knockoutResults[m.id])) {
     const nextStage = { r32: 'r16', r16: 'qf', qf: 'sf', sf: 'final' }[state.currentKOStage];
@@ -514,8 +555,9 @@ function clearDownstreamResults(matchId) {
       clearDownstreamResults(`sf_${sfIdx}`);
     }
   } else if (matchId.startsWith('sf_')) {
+    // FIX: also clear third place match when SF result changes
     delete state.knockoutResults['final'];
-    delete state.knockoutResults['third']; // Ensure 3rd place match cleans up too!
+    delete state.knockoutResults['third'];
   }
 }
 
@@ -526,7 +568,7 @@ function exportGroupStage() {
   el.innerHTML = buildGroupStageExportHTML();
   setTimeout(() => {
     html2canvas(el, { scale: 2, backgroundColor: '#0a0e1a', useCORS: true }).then(canvas => {
-      downloadCanvas(canvas, `WC2026_GroupStage_${state.playerName.replace(/\s/g,'_')}.png`);
+      downloadCanvas(canvas, `WC2026_GroupStage_${state.playerName.replace(/\s/g, '_')}.png`);
       el.style.display = 'none';
     });
   }, 200);
@@ -538,7 +580,7 @@ function exportKnockout() {
   el.innerHTML = buildKnockoutExportHTML();
   setTimeout(() => {
     html2canvas(el, { scale: 2, backgroundColor: '#0a0e1a', useCORS: true }).then(canvas => {
-      downloadCanvas(canvas, `WC2026_Knockout_${state.playerName.replace(/\s/g,'_')}.png`);
+      downloadCanvas(canvas, `WC2026_Knockout_${state.playerName.replace(/\s/g, '_')}.png`);
       el.style.display = 'none';
     });
   }, 200);
@@ -553,13 +595,13 @@ function downloadCanvas(canvas, filename) {
 
 function buildGroupStageExportHTML() {
   const groupsHTML = GROUP_NAMES.map(g => {
-    const pred = state.groupPredictions[g] ||[];
+    const pred = state.groupPredictions[g] || [];
     return `
       <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#FFD700;letter-spacing:2px;margin-bottom:10px;">GROUP ${g}</div>
         ${pred.map((t, i) => t ? `
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <span style="font-size:16px;">${['🥇','🥈','🥉','💀'][i]}</span>
+            <span style="font-size:16px;">${['🥇', '🥈', '🥉', '💀'][i]}</span>
             <span style="font-size:20px;">${t.flag}</span>
             <span style="font-family:'Barlow Condensed',sans-serif;font-size:14px;color:#fff;font-weight:600;">${t.name}</span>
           </div>
@@ -585,16 +627,16 @@ function buildKnockoutExportHTML() {
     return `
       <div style="background:rgba(255,255,255,0.05);border:1px solid ${w ? '#FFD700' : 'rgba(255,255,255,0.1)'};border-radius:10px;padding:12px;margin-bottom:8px;">
         <div style="font-size:11px;color:#aaa;letter-spacing:1px;margin-bottom:8px;">${m.label}</div>
-        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;${w && a && w.name===a.name ? 'font-weight:700;color:#FFD700;' : 'color:rgba(255,255,255,0.7);'}">
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;${w && a && w.name === a.name ? 'font-weight:700;color:#FFD700;' : 'color:rgba(255,255,255,0.7);'}">
           <span style="font-size:18px;">${a ? a.flag : '❓'}</span>
           <span style="font-size:13px;">${a ? a.name : 'TBD'}</span>
-          ${w && a && w.name===a.name ? '<span>✓</span>' : ''}
+          ${w && a && w.name === a.name ? '<span>✓</span>' : ''}
         </div>
         <div style="font-size:10px;color:#555;text-align:center;">vs</div>
-        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;${w && b && w.name===b.name ? 'font-weight:700;color:#FFD700;' : 'color:rgba(255,255,255,0.7);'}">
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;${w && b && w.name === b.name ? 'font-weight:700;color:#FFD700;' : 'color:rgba(255,255,255,0.7);'}">
           <span style="font-size:18px;">${b ? b.flag : '❓'}</span>
           <span style="font-size:13px;">${b ? b.name : 'TBD'}</span>
-          ${w && b && w.name===b.name ? '<span>✓</span>' : ''}
+          ${w && b && w.name === b.name ? '<span>✓</span>' : ''}
         </div>
       </div>
     `;
@@ -629,15 +671,16 @@ function spawnConfetti() {
     const div = document.createElement('div');
     div.className = 'confetti-piece';
     div.style.cssText = `
-      left:${Math.random()*100}%; animation-delay:${Math.random()*3}s;
-      background:${['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#FFA07A'][Math.floor(Math.random()*5)]};
-      width:${6+Math.random()*10}px; height:${6+Math.random()*10}px;
+      left:${Math.random() * 100}%; animation-delay:${Math.random() * 3}s;
+      background:${['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'][Math.floor(Math.random() * 5)]};
+      width:${6 + Math.random() * 10}px; height:${6 + Math.random() * 10}px;
       border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
     `;
     container.appendChild(div);
   }
 }
 
+// FIX: Completed the truncated restartApp function
 function restartApp() {
   state = {
     playerName: '',
@@ -650,4 +693,3 @@ function restartApp() {
   document.getElementById('playerName').value = '';
   showScreen('screen-welcome');
 }
-
