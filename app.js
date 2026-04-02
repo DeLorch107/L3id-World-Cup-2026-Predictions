@@ -150,9 +150,6 @@ function renderUnrankedPool(unranked, ranked) {
 let pendingSlot = null;
 
 function clickSlot(slotIdx) {
-  const groupKey = GROUP_NAMES[state.currentGroup];
-  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] : [null,null,null,null];
-  if (pred[slotIdx]) return; 
   pendingSlot = slotIdx;
   document.querySelectorAll('.ranked-slot').forEach((el, i) => {
     el.classList.toggle('awaiting', i === slotIdx);
@@ -394,10 +391,17 @@ function propagateWinners() {
   finalMatch.teamB = state.knockoutResults['sf_1'] || null;
   
   // 3rd place match: losers of SF
-  thirdMatch.teamA = sfMatches[0] && state.knockoutResults['sf_0'] 
-    ? (state.knockoutResults['sf_0'].name === sfMatches[0].teamA.name ? sfMatches[0].teamB : sfMatches[0].teamA) : null;
-  thirdMatch.teamB = sfMatches[1] && state.knockoutResults['sf_1'] 
-    ? (state.knockoutResults['sf_1'].name === sfMatches[1].teamA.name ? sfMatches[1].teamB : sfMatches[1].teamA) : null;
+    const sf0winner = state.knockoutResults['sf_0'];
+  const sf1winner = state.knockoutResults['sf_1'];
+  const sf0 = sfMatches[0];
+  const sf1 = sfMatches[1];
+
+  thirdMatch.teamA = (sf0 && sf0winner && sf0.teamA && sf0.teamB)
+    ? (sf0winner.name === sf0.teamA.name ? sf0.teamB : sf0.teamA)
+    : null;
+  thirdMatch.teamB = (sf1 && sf1winner && sf1.teamA && sf1.teamB)
+    ? (sf1winner.name === sf1.teamA.name ? sf1.teamB : sf1.teamA)
+    : null;
 }
 
 // ── KNOCKOUT STAGE NAVIGATION & PICKS ───────────────────────
@@ -639,4 +643,11 @@ function restartApp() {
     playerName: '',
     currentGroup: 0,
     groupPredictions: {},
-    selectedThirds:
+    selectedThirds: [],
+    knockoutResults: {},
+    currentKOStage: 'r32',
+  };
+  document.getElementById('playerName').value = '';
+  showScreen('screen-welcome');
+}
+
