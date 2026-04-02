@@ -17,10 +17,10 @@ const GROUPS = {
   L: { name: 'L', teams:[ { name: 'England', code: 'GB-ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', conf: 'UEFA' }, { name: 'Croatia', code: 'HR', flag: '🇭🇷', conf: 'UEFA' }, { name: 'Ghana', code: 'GH', flag: '🇬🇭', conf: 'CAF' }, { name: 'Panama', code: 'PA', flag: '🇵🇦', conf: 'CONCACAF' } ] }
 };
 
-const GROUP_NAMES =['A','B','C','D','E','F','G','H','I','J','K','L'];
+const GROUP_NAMES = ['A','B','C','D','E','F','G','H','I','J','K','L'];
 
-// Round of 32 official FIFA fixed matchups [8]
-const R32_FIXED =[
+// Round of 32 official FIFA fixed matchups
+const R32_FIXED = [
   { id: 'm73', teamA: { group:'A', pos:'2nd' }, teamB: { group:'B', pos:'2nd' }, label:'Match 73' },
   { id: 'm74', teamA: { group:'E', pos:'1st' }, teamB: { group:null, pos:'3rd', pool:'A/B/C/D/F' }, label:'Match 74' },
   { id: 'm75', teamA: { group:'F', pos:'1st' }, teamB: { group:'C', pos:'2nd' }, label:'Match 75' },
@@ -39,22 +39,28 @@ const R32_FIXED =[
   { id: 'm88', teamA: { group:'D', pos:'2nd' }, teamB: { group:'G', pos:'2nd' }, label:'Match 88' },
 ];
 
-// R16 Official Matchups mapped to ensure Left vs Right Bracket halves
-const R16_PAIRS = [['m73','m75'], // Match 89
-  ['m74','m77'], // Match 90
-  ['m83','m84'], // Match 93['m81','m82'], // Match 94
-  ['m76','m78'], // Match 91
-  ['m79','m80'], // Match 92['m86','m88'], // Match 95
-  ['m85','m87'], // Match 96
+// R16 Official Matchups — FIXED: each pair on its own line, no merged lines
+const R16_PAIRS = [
+  ['m73', 'm75'], // Match 89
+  ['m74', 'm77'], // Match 90
+  ['m76', 'm78'], // Match 91
+  ['m79', 'm80'], // Match 92
+  ['m83', 'm84'], // Match 93
+  ['m81', 'm82'], // Match 94
+  ['m86', 'm88'], // Match 95
+  ['m85', 'm87'], // Match 96
 ];
 
-// QF Official Pairs mapped sequentially
-const QF_PAIRS = [['r16_0','r16_1'], // Match 97['r16_2','r16_3'], // Match 98
-  ['r16_4','r16_5'], // Match 99
-  ['r16_6','r16_7'], // Match 100
+// QF Official Pairs — FIXED: each pair on its own line, no merged lines
+const QF_PAIRS = [
+  ['r16_0', 'r16_1'], // Match 97
+  ['r16_2', 'r16_3'], // Match 98
+  ['r16_4', 'r16_5'], // Match 99
+  ['r16_6', 'r16_7'], // Match 100
 ];
 
 // SF Pairs
-const SF_PAIRS = [['qf_0','qf_1'], // Match 101
-  ['qf_2','qf_3'], // Match 102
+const SF_PAIRS = [
+  ['qf_0', 'qf_1'], // Match 101
+  ['qf_2', 'qf_3'], // Match 102
 ];
