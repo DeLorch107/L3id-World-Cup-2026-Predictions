@@ -108,7 +108,7 @@ function renderCurrentGroup() {
     </div>
   `;
 
-  const ranked = pred ? [...pred] :[null, null, null, null];
+  const ranked = pred ? [...pred] : [null, null, null, null];
   const unranked = group.teams.filter(t => !ranked.find(r => r && r.name === t.name));
 
   renderRankedSlots(ranked, unranked, group.teams);
@@ -117,7 +117,7 @@ function renderCurrentGroup() {
 
 function renderRankedSlots(ranked, unranked, allTeams) {
   const container = document.getElementById('rankedSlots');
-  const labels = ['1st', '2nd', '3rd', '4th'];
+  const labels =['1st', '2nd', '3rd', '4th'];
   container.innerHTML = ranked.map((team, i) => `
     <div class="ranked-slot ${team ? 'filled' : 'empty'} slot-${labels[i]}"
          data-slot="${i}" onclick="clickSlot(${i})">
@@ -163,7 +163,7 @@ function clickTeamCard(teamName) {
   const groupKey = GROUP_NAMES[state.currentGroup];
   const group = GROUPS[groupKey];
   const team = group.teams.find(t => t.name === teamName);
-  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] :[null,null,null,null];
+  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] : [null,null,null,null];
 
   const existingIdx = pred.findIndex(r => r && r.name === teamName);
   if (existingIdx !== -1) pred[existingIdx] = null;
@@ -189,7 +189,7 @@ function removeFromSlot(e, slotIdx) {
   e.stopPropagation();
   const groupKey = GROUP_NAMES[state.currentGroup];
   const group = GROUPS[groupKey];
-  const pred = state.groupPredictions[groupKey] ? [...state.groupPredictions[groupKey]] : [null,null,null,null];
+  const pred = state.groupPredictions[groupKey] ?[...state.groupPredictions[groupKey]] : [null,null,null,null];
   pred[slotIdx] = null;
   state.groupPredictions[groupKey] = pred;
   const unranked = group.teams.filter(t => !pred.find(r => r && r.name === t.name));
@@ -348,7 +348,7 @@ function resolveR32Matches() {
 
 let r32Matches = [];
 let r16Matches = [];
-let qfMatches  = [];
+let qfMatches  =[];
 let sfMatches  =[];
 let finalMatch = null;
 let thirdMatch = null;
@@ -635,4 +635,8 @@ function spawnConfetti() {
 }
 
 function restartApp() {
-  state = { playerName: '', currentGroup: 0, groupPredictions: {}, selectedThirds:
+  state = {
+    playerName: '',
+    currentGroup: 0,
+    groupPredictions: {},
+    selectedThirds:
